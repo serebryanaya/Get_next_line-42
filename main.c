@@ -2,13 +2,13 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <stdio.h>
+#include <stdio.h> // FIXME!!!
 #include <fcntl.h> // for OPEN
-#include "../libft/libft.h"
+//#include "./libft/libft.h"
 #include "get_next_line.h"
 
-#define BUFFER_SIZE 32  //DELETE!>
-
+//#define BUFFER_SIZE 32  //DELETE!>
+/*
 void	ft_clear(char *s)
 {
 	if (s)
@@ -88,16 +88,73 @@ int main (void)
 //    printf("line first = %s\n", line);
     fd = open("test_text.txt", O_RDONLY); // file name, flag
  //   printf("fd = %d\n", fd);
-    /*get_next_line(fd, &line);
+    get_next_line(fd, &line);
     printf("line 1st = %s\n", line);
 
     get_next_line(fd, &line);
     printf("line 2nd = %s\n", line);
 
     get_next_line(fd, &line);
-    printf("line 3th = %s\n", line);*/
+    printf("line 3th = %s\n", line);
 
-    while (get_next_line(fd, &line))
+    while (get_next_line(fd, &line)) // пока есть что читать
+        printf("line finish = %s\n", line); // смотрим вывод строки
+        printf("return GNL = %d\n", get_next_line(fd, &line)); // смотрим возврат функции
+}
+
+int main (void)
+{
+    char *line;
+    int fd;
+
+    line = "hello, world!"; // len = 13
+    printf("line default = %s\n", line);
+    fd = open("test_text.txt", O_RDONLY); // file name, flag
+ //   printf("fd = %d\n", fd);
+    get_next_line(fd, &line);
+    printf("запись в line на 10 байт = %s\n", line);
+
+    get_next_line(fd, &line);
+    printf("line 2nd = %s\n", line);
+
+    get_next_line(fd, &line);
+    printf("line 3th = %s\n", line);
+
+    while (get_next_line(fd, &line)) // пока есть что читать
+        printf("line finish = %s\n", line); // смотрим вывод строки
+        printf("return GNL = %d\n", get_next_line(fd, &line)); // смотрим возврат функции
+//while (1);
+}*/
+
+int main (void)
+{
+    char *line;
+    int fd1;
+    int fd2;
+    int counter;
+
+    counter = 0;
+    line = "hello, world!";
+    
+    printf("line first = %s\n", line);
+    fd1 = open("test_text.txt", O_RDONLY); // file name, flag
+    //printf("fd1 = %d\n", fd1);
+    //fd2 = open("test_text_long.txt", O_RDONLY); 
+    while (get_next_line(fd1, &line) && counter < 1)
+        {
         printf("line finish = %s\n", line);
-        printf("return GNL = %d\n", get_next_line(fd, &line));     
+        counter++;   
+        }
+    /*while (get_next_line(fd2, &line) && counter < 6)
+        {
+        printf("line finish = %s\n", line);
+        counter++;
+        }
+    while (get_next_line(fd1, &line) && counter < 9)
+        {
+        printf("line finish = %s\n", line);
+        counter++;   
+        }*/
+        while (1);
+        return (0);
 }
