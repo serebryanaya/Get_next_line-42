@@ -18,7 +18,7 @@ size_t	ft_strlcpy(char *dst, char *src, size_t dstsize);
 typedef struct get_next_line
 {
     int fd;
-    char *treasure;
+    char *memory;
     struct get_next_line *next;
 }       s_list;
 
