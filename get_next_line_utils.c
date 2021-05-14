@@ -9,6 +9,54 @@ size_t	ft_strlen(char *s)
 		i++;
 	return (i);
 }
+
+size_t	ft_strlcat(char *dst, char *src, size_t dstsize)
+{
+	size_t	i;
+	size_t	orig;
+	size_t	j;
+
+	j = 0;
+	if (dstsize < ft_strlen(dst))
+		return (dstsize + ft_strlen(src));
+	orig = ft_strlen(dst);
+	i = orig;
+	while (i < (dstsize - 1) && (src[j] != '\0') && dstsize > 0)
+		dst[i++] = src[j++];
+	dst[i] = '\0';
+	return (ft_strlen(src) + orig);
+}
+
+void	*ft_memccpy(void *dst, void *src, char c)
+{
+	size_t	i;
+
+	i = 0;
+	if (!dst && !src)
+		return (0);
+	i = 0;
+	while (dst)
+	{
+		*((unsigned char *)dst + i) = *((unsigned char *)src + i);
+		if (*((unsigned char *)src + i) == c)
+			return (dst + i);
+		i++;
+	}
+	return (NULL);
+}
+
+void	ft_myzero(char *str)
+{
+	size_t	i;
+
+	i = 0;
+	while (str[i] != '\0')
+	{
+		str[i] = '\0';
+		i++;
+	}
+}
+
 char	*ft_strchr(char *str, char c) // ищет 1е вхождение разделителя в строку
 {
 	size_t	i;
@@ -82,12 +130,14 @@ char	*ft_strjoin (char *s1, char *s2)
 	return (res);
 }
 
-char	*ft_substr(char *s, int start, size_t len)
+char	*ft_substr(char *s, int start_s, size_t len)
 {
 	char			*sub;
 	unsigned int	i;
+	size_t		start;
 
 	i = 0;
+	start = start_s;
 	if (s == NULL)
 		return (NULL);
 	if (start >= ft_strlen(s))
