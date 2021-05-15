@@ -129,32 +129,40 @@ int main (void)
 int main (void)
 {
     char *line;
-    int fd1;
+    int fd;
     int fd2;
     int counter;
 
     counter = 0;
     line = "hello, world!";
     
-    printf("line first = %s\n", line);
-    fd1 = open("test_text.txt", O_RDONLY); // file name, flag
-    //printf("fd1 = %d\n", fd1);
-    //fd2 = open("test_text_long.txt", O_RDONLY); 
-    while (get_next_line(fd1, &line) && counter < 1)
+    printf("str 143: line first = %s\n", line);
+    fd = open("test_text.txt", O_RDONLY); // file name, flag
+    printf("fd = %d\n", fd); //FIXME
+
+   
+    fd2 = open("test_text_long.txt", O_RDONLY); 
+    //printf("fd2 = %d\n", fd2); //FIXME
+
+
+    while (counter < 2 && get_next_line(fd, &line))
         {
-        printf("line finish = %s\n", line);
-        counter++;   
+        printf("CIRCLE 1!!!! line finish = %s\n", line);
+        counter++; 
+        printf("counter = %d\n", counter); //FIXME  
         }
-    /*while (get_next_line(fd2, &line) && counter < 6)
+    printf("fd2 = %d\n", fd2); //FIXME*/
+    while (counter < 10 && get_next_line(fd2, &line))
         {
-        printf("line finish = %s\n", line);
+        printf("fd2 = %d\n", fd2); //FIXME
+        printf("CIRCLE 2!!!! line finish = %s\n", line);
         counter++;
         }
-    while (get_next_line(fd1, &line) && counter < 9)
+        while (get_next_line(fd, &line) && counter < 15)
         {
-        printf("line finish = %s\n", line);
+        printf("CIRCLE 3!!!! line finish = %s\n", line);
         counter++;   
-        }*/
-        while (1);
+        }
+        //while (1);
         return (0);
 }

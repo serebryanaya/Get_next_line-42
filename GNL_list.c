@@ -1,5 +1,7 @@
 #include "get_next_line.h"
 
+#include "get_next_line.h"
+
 s_list  *create_list(int fd)
 {
     s_list  *new_list;
@@ -8,7 +10,8 @@ s_list  *create_list(int fd)
     if (new_list == NULL)
         return (0);
     new_list->fd = fd;
-    new_list->memory = ft_calloc(BUFFER_SIZE + 1, sizeof(char));
+    new_list->memory = malloc(BUFFER_SIZE + 1 * sizeof(char));
+    (new_list->memory)[0] = '\0';
     new_list->next = NULL;
     return (new_list);
 }
@@ -19,22 +22,34 @@ char *search_in_mem (char *is_n, char *memory) //переделывает is_n �
     char *tmp;
 
     is_n = ft_strchr(memory, '\n');
-    printf("string 22: is_n = %s\n", is_n); //FIXME
+    //printf("string 22: is_n = %s\n", is_n); //FIXME
     if (is_n != NULL) //то есть нашли \n
     {
         new_mem = ft_substr(memory, 0, is_n - memory);
-        tmp = ft_memccpy(memory, is_n + 1, '\n');
-        ft_myzero(tmp);
+        //printf("string 26: newmem = %s\n", new_mem); //FIXME
+        tmp = ft_substr(memory, is_n - memory + 1, ft_strlen(is_n));
+        //printf("string 28: tmp = %s\n", tmp); //FIXME
+        ft_myzero(memory);
+        //printf("string 30: memory = %s\n", memory); //FIXME
+        ft_strlcat(memory, tmp, BUFFER_SIZE + 1);
+        //tmp = ft_memccpy(memory, is_n + 1, '\n');
+        //printf("string 30: tmp = %s\n", tmp); //FIXME
+        free(tmp);
+        tmp = NULL;
+        //printf("string 32: memory = %s\n", memory); //FIXME
     }
     else //если не нашли \n
     {
-        new_mem = ft_calloc(ft_strlen(memory) + 1, sizeof(char));
+        new_mem = malloc(ft_strlen(memory) + 1 * sizeof(char));
+        //printf("string 41: newmem = %s\n", new_mem); //FIXME
+        new_mem[0] = '\0';
         ft_strlcat(new_mem, memory, BUFFER_SIZE + 1);
-        free(memory);
-        memory = NULL;
+        //printf("string 43: newmem = %s\n", new_mem); //FIXME
+        ft_myzero(memory);
     }
     return (new_mem);
 }
+
 
 int reading(int fd, char *memory, char **line)
 {
@@ -44,47 +59,69 @@ int reading(int fd, char *memory, char **line)
     int bytes;
 
     is_n = NULL;
-    if (memory != NULL)
+    if (ft_strchr(memory, '\n'))
         {
             *line = search_in_mem(is_n, memory); //кладем в лайн остаток. и переделываем is_n
-            printf("string 49: line after search in mem = %s\n", *line); //FIXME
+            //printf("string 60: line after search in mem = %s\n", *line); //FIXME
+            //printf("string 61: is_n = %s\n", is_n); //FIXME
+            //printf("string 61: memory = %s\n", memory); //FIXME
+            return (1);
         }
-    else
-        return (-1); // FIXME!!!!
-    bytes = read(fd, buffer, BUFFER_SIZE);
-    while (is_n == NULL && bytes > 0)
+               /* while (is_n != NULL)
+                {
+                    *line = search_in_mem(is_n, memory);
+                    printf("string 66: line after search in mem = %s\n", *line); //FIXME
+                    printf("string 67: is_n = %s\n", is_n); //FIXME
+                printf("string 68: memory = %s\n", memory); //FIXME
+                }
+
+            if (is_n == NULL)
+                break ;*/
+    
+    /*else
+        return (-1); // FIXME!!!!*/
+   // bytes = read(fd, buffer, BUFFER_SIZE);
+        *line = search_in_mem(is_n, memory); //кладем в лайн остаток. и переделываем is_n
+        //printf("string 82: line after search in mem = %s\n", *line); //FIXME
+        //printf("string 83: is_n = %s\n", is_n); //FIXME
+        //printf("string 84: memory = %s\n", memory); //FIXME
+    while (is_n == NULL && (bytes = read(fd, buffer, BUFFER_SIZE)) > 0)
     { // сюда идем, если не было остатка!
-        printf("string 56: bytes = %d\n", bytes); //FIXME
+    
+        //printf("string 88 bytes = %d\n", bytes); //FIXME
         buffer[bytes] = '\0';
-        printf("string 58: buff = %s\n", buffer); //FIXME
+        //printf("string 90: buff = %s\n", buffer); //FIXME
         //is_n = ft_strchr(buffer, '\n');
-        //printf("string 60: is_n = %s\n", is_n); //FIXME
+        //printf("string 92: is_n = %s\n", is_n); //FIXME
         if ((is_n = ft_strchr(buffer, '\n')) != NULL)
             {
+                //ft_strl(memory, ++is_n);
+                /*if (memory == NULL)
+                    break ;*/
                 ft_strlcat(memory, ++is_n, BUFFER_SIZE + 1);
-                printf("string 64: memory = %s\n", memory); //FIXME
-                printf("string 645: is_n = %s\n", is_n); //FIXME
+                //printf("string 99: memory = %s\n", memory); //FIXME
+                //printf("string 100: is_n = %s\n", is_n); //FIXME
                 ft_myzero(--is_n);
-                printf("string 67: memory = %s\n", memory); //FIXME
-                printf("string 68: is_n = %s\n", is_n); //FIXME
+                //printf("string 102: memory = %s\n", memory); //FIXME
+                //printf("string 103: is_n = %s\n", is_n); //FIXME
             }
         copy_line = *line;
-        printf("string 71: copy_line = %s\n", copy_line);//FIXME
+        //printf("string 106: copy_line = %s\n", copy_line);//FIXME
         *line = ft_strjoin(copy_line, buffer); // тут просто буфер, потому что освободила \n т.е. после него нет ничего в буфере
-        printf("string 73: line + buf = %s\n", *line);//FIXME
-        if (!line)
+        //printf("string 108: line + buf = %s\n", *line);//FIXME
+        if (!line || bytes < 0)
             return (-1);
         free(copy_line);
         copy_line = NULL;
-        printf("string 78: copy_line = %s\n", copy_line);//FIXME
-        bytes = read(fd, buffer, BUFFER_SIZE);
+        //printf("string 113: copy_line = %s\n", copy_line);//FIXME
+        //bytes = read(fd, buffer, BUFFER_SIZE);
     }
-    if (ft_strlen(*line) != 0)
+    if (ft_strlen(*line) != 0 || ft_strlen(memory) != 0 || bytes > 0)
      {
-         printf("string 82: ft_strlen(*line) = %zu\n", ft_strlen(*line));//FIXME
+         //printf("string 109: ft_strlen(*line) = %zu\n", ft_strlen(*line));//FIXME
         return (1);
      }
-    printf("string 85: ft_strlen(*line) = %zu\n", ft_strlen(*line));//FIXME
+    //printf("string 112: ft_strlen(*line) = %zu\n", ft_strlen(*line));//FIXME
     return (0);
 }
 
@@ -92,18 +129,18 @@ int get_next_line(int fd, char **line)
 {
     static s_list  *list;
     s_list  *copy_list;
-    int return_value = 0;
+    int return_value;
 
     if (fd < 0 || !line || BUFFER_SIZE <= 0)
         return (-1);
-    printf("string 97: fd current = %d\n", fd); //FIXME
+    //printf("string 124: fd current = %d\n", fd); //FIXME
     if (list == NULL)
         {
             list = create_list(fd);
             if (list == NULL)
                 return (-1);
         }
-    printf("string 104: list = %s\n", list->memory); //FIXME
+    //printf("string 131: list = %s\n", list->memory); //FIXME
     copy_list = list;
     while (copy_list->fd != fd)
     {
@@ -111,10 +148,10 @@ int get_next_line(int fd, char **line)
             copy_list->next = create_list(fd);
         copy_list = copy_list->next;
     }
-    printf("string 112: copy_list = %s\n", copy_list->memory); //FIXME
-    printf("string 113: copy_list fd = %d\n", copy_list->fd); //FIXME
+    //printf("string 139: copy_list = %s\n", copy_list->memory); //FIXME
+    //printf("string 149: copy_list fd = %d\n", copy_list->fd); //FIXME
     //reading(fd, copy_list->memory, line);
     return_value = reading(fd, copy_list->memory, line);
-    printf("string 116: ret_val = %d\n", return_value); //FIXME
+    //printf("string 143: ret_val = %d\n", return_value); //FIXME
     return (return_value);
 }
