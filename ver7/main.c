@@ -1,5 +1,4 @@
 #include <sys/types.h>
-#include <sys/uio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h> 
@@ -19,11 +18,11 @@ if (argc < 1)
                                                 printf("No arguments\n");
     return (-1);
 }
-if (argc == 1)
+/*if (argc == 1)
     {
         fd = 0;
                                                 printf("str24 main\n");
-    }
+    }*/
 else
 {
     fd = open(argv[1], O_RDONLY);
