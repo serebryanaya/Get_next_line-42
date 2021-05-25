@@ -21,7 +21,7 @@ char	*ft_strchr(char *buf)
                 i++;
                                                           //printf("str24 strchr: : str[i] = %c\n", *(buf+i));//FIXME!                  
             }
-   if (*(buf + i) == '\n')
+   if (*(buf + i) != '\0')
         {
             (buf + i)[0] = '\0';
             return (buf + i);
@@ -71,6 +71,11 @@ char	*ft_strjoin (char *line, char *buf)
 		j++;
 	}
 	join[i] = '\0';
+    if (ft_strlen(join) != (ft_strlen(line) + (ft_strlen(buf))))
+        {
+            free(join);
+            return (NULL);
+        }
                                                             //printf("str77 join: : join = %s\n", join);//FIXME! 
 	return (join);
 }
@@ -145,6 +150,7 @@ s_list  *create_list(int fd)
             new_list = NULL;
             return (NULL);
         }
+    new_list->len = 0;;
     new_list->next = NULL;
     return (new_list);
 }
@@ -169,7 +175,11 @@ s_list *list_check(int fd, s_list *list)
     while (copy_list->fd != fd)
     {
         if (copy_list->next == NULL)
+            {
             copy_list->next = create_list(fd);
+            if (copy_list->next == NULL)
+                return (NULL);
+            }
         copy_list = copy_list->next;
     }
                                                             //printf("str164 : copy_list->memory = %s\n", copy_list->memory);//FIXME!
@@ -181,31 +191,34 @@ int check_in_memory(char **line, char *buf, s_list *list)
 {
     char    *is_n;
     char *tmp;
-    int len;
-    
+
     is_n = ft_strchr(list->memory);
                                                             //printf("str176 : memory = %s\n", list->memory);//FIXME!     
                                                             //printf("str177 : is_n = %s\n", is_n);//FIXME!                                                             
-    len = ft_strlen(list->memory);
-    if (is_n == NULL)
+    /*if (is_n == NULL)
         {
             *line = ft_strdup(list->memory);
             if (!*line)
                 return (-1);
             return (clean(list, buf, line, 2)); // rturn 0 + clean memory
-        }
-    is_n[0] = '\0';
+        }*/
+    //is_n[0] = '\0';
     *line = ft_strdup(list->memory);
-    if (is_n - list->memory + 1 != len)
-       {
-           tmp = ft_strdup(is_n + 1);
-            if (!*line || !tmp)
-                return (-1);
-            free(list->memory);
-            list->memory = tmp;
-            return (1);
-       }
-    return ((clean(list, buf, line, 2)) + 1); // return 1 + clean memory
+   /* if (line[0] == '\0')
+        return (2 + clean(list, buf, line, 1)); // rturn 1, clean line + memory*/
+    if (!*line)
+        return (-1);
+    if (is_n == NULL || ft_strlen(is_n + 1) == 0)
+        return (clean(list, buf, line, 2)); // rturn 0 + clean memory
+
+    tmp = ft_strdup(is_n + 1);
+    if (!tmp)
+        return (clean(list, buf, line, 3));// rturn -1 + clean line
+    free(list->memory);
+    list->memory = tmp;
+    list->len = ft_strlen(tmp);
+    tmp = NULL;
+    return (1);
 }
 
 int ft_read(char **line, char *buf, s_list *list, int fd)
@@ -213,8 +226,8 @@ int ft_read(char **line, char *buf, s_list *list, int fd)
 int bytes;
 char *is_n;
 
-bytes = 1;
-while (bytes > 0)
+bytes = BUFFER_SIZE;
+while (bytes == BUFFER_SIZE)
 {  
 buf = malloc(sizeof(char) * (BUFFER_SIZE + 1));
 
@@ -223,9 +236,16 @@ buf = malloc(sizeof(char) * (BUFFER_SIZE + 1));
     if (!buf)
         return (-1);
  bytes = read(fd, buf, BUFFER_SIZE);
-                                                         printf("str218 : bytes = %d\n", bytes);//FIXME!
+                                                         //printf("str218 : bytes = %d\n", bytes);//FIXME!   
+                                                        printf("str234 : buf = %s\n", buf);//FIXME!
     if (bytes == 0)
-        return (1 + clean(list, buf, line, 5)); // clean buf, line, list, ret 0
+    {
+                                                                 printf("str242 : bytes = %d\n", bytes);//FIXME!   
+        /*if (line[0][0] != '\0')
+            return (0); */
+        return (0); // clean buf, ret 0
+    }
+
 /*if (buf[bytes - 1] != '\0')
     {
         buf[bytes] = '\0';
@@ -237,24 +257,31 @@ else
                                                             //printf("str222 : *line = %s\n", *line);//FIXME!
     return (2 + clean(list, buf, line, 4)); // clean buf and line, ret 1
 }*/
+                                                        //printf("str259 : buf = %s\n", buf);//FIXME!
 is_n = ft_strchr(buf);
+                                                        //printf("str261 : buf = %s\n", buf);//FIXME!
+*line = ft_strjoin(*line, buf);
+                                                        //printf("str234 : buf = %s\n", buf);//FIXME!
+                                                        printf("str231 : *line = %s\n", *line);//FIXME!
+
+ if (!*line)
+    {
+        list->memory = ft_strdup(buf);
+        return (clean(list, buf, line, 4)); // clean buf + line, ret - 1
+    }
+
                                                             //printf("str225 : is_n = %s\n", is_n);//FIXME!
-if (is_n != NULL && (is_n - buf + 1 != ft_strlen(buf)))
+//if (is_n != NULL && (ft_strlen(is_n + 1) != 0))
+if (is_n != NULL)
        {
         list->memory = ft_strdup(is_n + 1);
                                                             //printf("str224 : memory = %s\n", list->memory);//FIXME!
             if (!list->memory)
-                return (-1);
-        is_n[0] = '\0'; 
-        *line = ft_strjoin(*line, buf);
-        return (2 + clean(list, buf, line, 5)); // clean buf and line, ret 1
+                return (clean(list, buf, line, 5)); // clean buf, ret - 1
+        list->len = ft_strlen(is_n + 1);
+        return (2 + clean(list, buf, line, 5)); // clean buf, ret 1
        }
-*line = ft_strjoin(*line, buf);
-                                                        //printf("str234 : buf = %s\n", buf);//FIXME!
-                                                        //printf("str231 : *line = %s\n", *line);//FIXME!
- if (!*line)
-    return (clean(list, buf, line, 5)); // clean buf, ret - 1
-if (bytes < BUFFER_SIZE)
+if (bytes < BUFFER_SIZE || buf[0] == '\0')
     break ;
 }
 /*if (ft_strlen(*line))
@@ -266,39 +293,46 @@ int get_next_line(int fd, char **line)
 {
     static  s_list  *list;
     char    *tmp[1];
-    char buf[BUFFER_SIZE + 1];
+    char *buf;
     int ostatok;
     int read_it;//del
     s_list *current_list;
 
     ostatok = 0;
+    buf = NULL;
  
                                                         //printf("str239 : fd = %d\n", fd);//FIXME!
     *line = ft_strdup("\0"); // leaks!
-    if (fd < 0 || !line || (read(fd, tmp, 0) != 0) || BUFFER_SIZE < 1)       
+                                                            //printf("str242 : line = %s\n", *line);//FIXME!
+    if (fd < 0 || !line || !(*line) || (read(fd, tmp, 0) != 0) || BUFFER_SIZE < 1 || BUFFER_SIZE >= 100000)       
        return (-1);
     if (!list)
-        list = create_list(fd);
+    {
+        list = create_list(fd); // may NULL will return. so need to do return -1
+        if (list == NULL)
+            return (-1);
+    }
     current_list = list_check(fd, list);
     if (!current_list)
     return (-1);
                                                         //printf("str158 : current_list->fd = %d\n", current_list->fd);//FIXME!
+                                                        //printf("str158 : current_list->len = %zu\n", current_list->len);//FIXME!                                                        
                                                         //printf("str242 : line = %s\n", *line);//FIXME!
    //line = ft_strdup("\0"); // leaks!
                                                         //printf("str250 : line = %s\n", *line);//FIXME!
                                                         //printf("str252 : current_list->memory = %s\n", current_list->memory);//FIXME!                                                       
-if (current_list->memory[0] != '\0')
-    ostatok = check_in_memory(line, buf, current_list);
+if (current_list->len > 0)
+    {
+        ostatok = check_in_memory(line, buf, current_list);
                                                         //printf("str255 : ostatok = %d\n", ostatok);//FIXME! 
                                                         //printf("str256 : line = %s\n", *line);//FIXME!
                                                         //printf("str257 : current_list->memory = %s\n", current_list->memory);//FIXME!                                                      
-if (ostatok == 1)
-    return (1);
-else if (ostatok == -1)
-    return (-1);
+if (ostatok != 0)
+    return (ostatok);
                                                         /*printf("str267 : line = %s\n", *line);//FIXME!
                                                         //printf("str268 : current_list->memory = %s\n", current_list->memory);//FIXME! 
                                                         //printf("str269 : buf = %s\n", buf);//FIXME! */
+    }
 read_it = ft_read(line, buf, current_list, fd);
                                                         //printf("str271 : fd = %d\n", fd);//FIXME! 
                                                         //printf("str272 : line = %s\n", *line);//FIXME!

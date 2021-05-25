@@ -60,10 +60,10 @@ else
 return (0);
 }*/
 fd = open(argv[1], O_RDONLY);
-while (counter < 189)
+while (counter < 2018)
         {
 value = get_next_line(fd, &line);
-if (counter > 186)
+if (counter > 2014)
 printf("FINISH: counter %d, ret_val = %d, line = %s*THE END*\n", counter, value, line);
 counter++;
         }

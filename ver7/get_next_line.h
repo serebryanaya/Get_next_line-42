@@ -10,6 +10,7 @@ int get_next_line(int fd, char **line);
 typedef struct get_next_line
 {
     int fd;
+    size_t len;
     char *memory;
     struct get_next_line *next;
 }       s_list;
