@@ -463,3 +463,81 @@ if (bytes < BUFFER_SIZE || buf[0] == '\0')
     return (1);*/
 return (0);
 }
+
+int get_next_line(int fd, char **line)
+{
+    static  s_list  *list;
+    int ostatok;
+    int read_it;
+    s_list *current_list;
+                                                        //printf("str239 : fd = %d\n", fd);//FIXME!
+                                                            //printf("str242 : line = %s\n", *line);//FIXME!
+    if (fd < 0 || !line || (read(fd, 0, 0) != 0) || BUFFER_SIZE < 1)       
+       return (-1);
+    
+    current_list = list_check(fd, list);
+    if (!current_list)
+    return (-1);
+                                                        //printf("str158 : current_list->fd = %d\n", current_list->fd);//FIXME!
+                                                        //printf("str158 : current_list->len = %zu\n", current_list->len);//FIXME!                                                        
+                                                        //printf("str242 : line = %s\n", *line);//FIXME!
+   //line = ft_strdup("\0"); // leaks!
+                                                        //printf("str250 : line = %s\n", *line);//FIXME!
+                                                        //printf("str252 : current_list->memory = %s\n", current_list->memory);//FIXME!                                                       
+    
+*line = NULL;
+ostatok = check_in_memory(line, current_list);
+                                                        //printf("str255 : ostatok = %d\n", ostatok);//FIXME! 
+                                                        //printf("str256 : line = %s\n", *line);//FIXME!
+                                                        //printf("str257 : current_list->memory = %s\n", current_list->memory);//FIXME!                                                      
+if (ostatok == 1)
+    return (ostatok);
+                                                        /*printf("str267 : line = %s\n", *line);//FIXME!
+                                                        //printf("str268 : current_list->memory = %s\n", current_list->memory);//FIXME! 
+                                                        //printf("str269 : buf = %s\n", buf);//FIXME! */
+if (ostatok == -1)
+    return (clean(list, line));
+    
+read_it = ft_read(line, current_list);
+                                                        //printf("str271 : fd = %d\n", fd);//FIXME! 
+                                                        //printf("str272 : line = %s\n", *line);//FIXME!
+                                                        //printf("str273 : current_list->memory = %s\n", current_list->memory);//FIXME! 
+                                                        //printf("str274 : buf = %s\n", buf);//FIXME! 
+if (read_it)
+    return (clean(list, line));
+if (!current_list->memory)
+    return (0);
+return (1);
+}
+
+int my_split(char *buf, char **line_or_mem)
+{
+char *tmp;
+size_t i;
+size_t j;
+
+i = ft_strlen(*line_or_mem);
+j = ft_strlen(buf);
+tmp = malloc(sizeof(char) * (i + j + 1));
+if (!tmp)
+return (-1);
+tmp = ft_strjoin(*line_or_mem, buf);
+free(*line_or_mem);
+*line_or_mem = tmp;
+return (0);
+}
+
+int clean(s_list list, char **buf_or_line)
+{
+    if (*buf_or_line)
+    {
+        free(*buf_or_line);
+        *buf_or_line = NULL;
+    }
+    if (*list->memory)
+       {
+        free(*list->memory);
+        *list->memory = NULL;
+    }
+    return (-1);
+}

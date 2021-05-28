@@ -80,55 +80,19 @@ char	*ft_strjoin (char *line, char *buf)
 	return (join);
 }
 
-int clean(s_list *list, char *buf, char **line, int tag)
+int clean(s_list list, char **buf_or_line)
 {
-    if (tag == 1) // memory + line
+    if (*buf_or_line)
     {
-        free(list->memory);
-        list->memory = NULL;
-        free(*line);
-        *line = NULL;
-        return (-1);
+        free(*buf_or_line);
+        *buf_or_line = NULL;
     }
-    if (tag == 2) // memory
-    {
-    list->memory = ft_strdup("");
-    free(list->memory);
-    list->memory = NULL;
-    return (0);
+    if (*list->memory)
+       {
+        free(*list->memory);
+        *list->memory = NULL;
     }
-    if (tag == 3) // line
-    {
-        free(*line);
-        *line = NULL;
-        return (-1);
-    }
-        if (tag == 4) // buf + line
-    {
-        free(buf);
-        buf = NULL;
-        free(*line);
-                                                                     //printf("str103 : *line = %s\n", *line);//FIXME!
-        *line = NULL;
-        return (-1);
-    }
-    if (tag == 5) // buf
-    {
-        free(buf);
-        buf = NULL;
-        return (-1);
-    }
-     if (tag == 6) // buf + line + list
-    {
-        free(buf);
-        buf = NULL;
-        free(*line);
-        *line = NULL;
-        free(list->memory);
-    list->memory = NULL;
-        return (0);
-    }
-    return (0);
+    return (-1);
 }
 
 s_list  *create_list(int fd)
@@ -223,81 +187,53 @@ int check_in_memory(char **line, s_list *list)
     return (0);
 }
 
-int ft_read(char **line, char *buf, s_list *list, int fd)
+int my_split(char *buf, char **line_or_mem)
 {
-int bytes;
-char *is_n;
-char *tmp_leaks;
+char *tmp;
+size_t i;
+size_t j;
 
-bytes = 1;
-while (bytes > 0)
-{  
+i = ft_strlen(*line_or_mem);
+j = ft_strlen(buf);
+tmp = malloc(sizeof(char) * (i + j + 1));
+if (!tmp)
+    return (-1);
+tmp = ft_strjoin(*line_or_mem, buf);
+free(*line_or_mem);
+*line_or_mem = tmp;
+    return (0);
+}
+
+int ft_read(char **line, s_list *list)
+{
+size_t bytes;
+size_t i;
+
 buf = malloc(sizeof(char) * (BUFFER_SIZE + 1));
 
                                                         //printf("str213 FT_READ\n");//FIXME!
                                                         //printf("str214 : buf before = %s\n", buf);//FIXME!
     if (!buf)
         return (-1);
- bytes = read(fd, buf, BUFFER_SIZE);
- buf[bytes] = '\0';
 
-                                                         //printf("str218 : bytes = %d\n", bytes);//FIXME!   
-                                                        //printf("str234 : buf = %s\n", buf);//FIXME!
-    if (bytes == 0)
-    {
-                                                                 //printf("str242 : bytes = %d\n", bytes);//FIXME!   
-        /*if (line[0][0] != '\0')
-            return (0); */
-        return (0); // clean buf, ret 0
-    }
-
-/*if (buf[bytes - 1] != '\0')
-    {
-        buf[bytes] = '\0';
-                                                            //printf("str223 : buf = %s\n", buf);//FIXME!
-    }
-else
+bytes = 1;
+while (bytes > 0)
 {
-    *line = ft_strjoin(*line, buf);
-                                                            //printf("str222 : *line = %s\n", *line);//FIXME!
-    return (2 + clean(list, buf, line, 4)); // clean buf and line, ret 1
-}*/
-                                                        //printf("str259 : buf = %s\n", buf);//FIXME!
-is_n = ft_strchr(buf);
-if (is_n)
-    *is_n = '\0';
-                                                        //printf("str261 : buf = %s\n", buf);//FIXME!
-tmp_leaks = *line;
-*line = ft_strjoin(*line, buf);
-if (!*line) 
-     return (clean(list, buf, line, 5)); // clean buf, ret - 1
-if (tmp_leaks)
-    free(tmp_leaks);
-                                                        //printf("str234 : buf = %s\n", buf);//FIXME!
-                                                        //printf("str231 : *line = %s\n", *line);//FIXME!
-
- /*if (!*line)
-    {
-        list->memory = ft_strdup(buf);
-        return (clean(list, buf, line, 4)); // clean buf + line, ret - 1
-    }*/
-
-                                                            //printf("str225 : is_n = %s\n", is_n);//FIXME!
-//if (is_n != NULL && (ft_strlen(is_n + 1) != 0))
-if (is_n != NULL)
-       {
-        list->memory = ft_strdup(is_n + 1);
-                                                            //printf("str224 : memory = %s\n", list->memory);//FIXME!
-            if (!list->memory)
-                return (clean(list, buf, line, 4)); // clean buf + line, ret - 1
-        list->len = ft_strlen(is_n + 1);
-        return (2 + clean(list, buf, line, 5)); // clean buf, ret 1
-       }
-if (bytes < BUFFER_SIZE || buf[0] == '\0')
-    break ;
+bytes = read(fd, buf, BUFFER_SIZE);
+i = 0;
+while (buf[i] != '\n' && i < bytes)
+    i++;
+buf[i] = '\0';
+if (bytes < 0 || my_split(buf, line) != 0)
+    return(clean(list, &buf));
+if (i < bytes)
+{
+buf[bytes] = '\0';
+if (my_split((buf + i + 1), &list->memory) != 0)
+    return(clean(list, &buf));
 }
-/*if (ft_strlen(*line))
-    return (1);*/
+}
+free(buf);
 return (0);
 }
 
@@ -338,7 +274,9 @@ if (ostatok == -1)
 read_it = ft_read(line, current_list);
                                                         //printf("str271 : fd = %d\n", fd);//FIXME! 
                                                         //printf("str272 : line = %s\n", *line);//FIXME!
-                                                        //printf("str273 : current_list->memory = %s\n", current_list->memory);//FIXME! 
+                              
+                              
+                                                       //printf("str273 : current_list->memory = %s\n", current_list->memory);//FIXME! 
                                                         //printf("str274 : buf = %s\n", buf);//FIXME! 
 if (read_it)
     return (clean(list, line));
