@@ -1,182 +1,117 @@
 #include "get_next_line.h"
 
-size_t	ft_strlen(char *s)
+t_list	*create_list(int fd)
 {
-	size_t	i;
+	t_list	*new_list;
 
-	i = 0;
-	while (s[i] != '\0')
-		i++;
-	return (i);
+	new_list = malloc(sizeof(t_list));
+	if (new_list == NULL)
+		return (NULL);
+	new_list->fd = fd;
+	new_list->memory = NULL;
+	new_list->index = 0;
+	new_list->next = NULL;
+	return (new_list);
 }
 
-size_t	ft_strlcat(char *dst, char *src, size_t dstsize)
+t_list	*list_check(int fd, t_list *list)
+{
+	t_list	*copy_list;
+
+	if (list == NULL)
+		return (NULL);
+	copy_list = list;
+	while (copy_list->fd != fd)
+	{
+		if (copy_list->next == NULL)
+		{
+			copy_list->next = create_list(fd);
+			if (copy_list->next == NULL)
+				return (NULL);
+		}
+		copy_list = copy_list->next;
+	}
+	return (copy_list);
+}
+
+int	check_in_memory(char **line, char **memory, size_t *index)
 {
 	size_t	i;
-	size_t	orig;
 	size_t	j;
 
-	j = 0;
-	if (dstsize < ft_strlen(dst))
-		return (dstsize + ft_strlen(src));
-	orig = ft_strlen(dst);
-	i = orig;
-	while (i < (dstsize - 1) && (src[j] != '\0') && dstsize > 0)
-		dst[i++] = src[j++];
-	dst[i] = '\0';
-	return (ft_strlen(src) + orig);
-}
-
-void	*ft_memccpy(void *dst, void *src, char c)
-{
-	size_t	i;
-
-	i = 0;
-	if (!dst && !src)
+	if (!(*memory))
 		return (0);
-	i = 0;
-	while (dst)
-	{
-		*((unsigned char *)dst + i) = *((unsigned char *)src + i);
-		if (*((unsigned char *)src + i) == c)
-			return (dst + i);
+	i = *index;
+	while ((*memory)[i] != '\0' && (*memory)[i] != '\n')
 		i++;
-	}
-	return (NULL);
-}
-
-void	ft_myzero(char *str)
-{
-	size_t	i;
-
-	i = 0;
-	while (str[i] != '\0')
-	{
-		str[i] = '\0';
-		i++;
-	}
-}
-
-char	*ft_strchr(char *str, char c) // ищет 1е вхождение разделителя в строку
-{
-	size_t	i;
-
-	i = 0;
-	while (*(str + i) != 0)
-	{
-		if (*(str + i) != c)
-			i++;
-		else
-			return (str + i);
-	}
-	if (c == '\0')
-		return (str + i);
-	return (NULL);
-}
-
-size_t	ft_strlcpy(char *dst, char *src, size_t dstsize)
-{
-	size_t	i;
-
-	i = 0;
-	if (!dst && !src)
-		return (0);
-	if (dstsize > 0)
-	{
-		while ((src[i] != '\0') && i < (dstsize - 1))
-		{
-			dst[i] = src[i];
-			i++;
-		}
-		dst[i] = '\0';
-	}
-	return (ft_strlen(src));
-}
-
-char	*ft_strdup(char *s1)
-{
-	char	*dup;
-
-	dup = malloc(sizeof(char) * (ft_strlen(s1) + 1));
-	if (!dup)
-		return (NULL);
-	ft_strlcpy(dup, s1, (ft_strlen(s1) + 1));
-	return (dup);
-}
-
-char	*ft_strjoin (char *s1, char *s2)
-{
-	unsigned int	i;
-	unsigned int	j;
-	char			*res;
-
-	i = 0;
+	*line = malloc(sizeof(char) * (i - *index + 1));
+	if (!line)
+		return (-1);
 	j = 0;
-	res = malloc(sizeof(char) * (ft_strlen(s1) + ft_strlen(s2) + 1));
-	if (!res)
-		return (NULL);
-	while (s1[i] != '\0')
+	while (*index < i)
+		(*line)[j++] = (*memory)[(*index)++];
+	(*line)[j] = '\0';
+	if ((*memory)[*index] == '\n')
 	{
-		res[i] = s1[i];
-		i++;
+		(*index)++;
+		return (1);
 	}
-	while (s2[j] != '\0')
-	{
-		res[i] = s2[j];
+	*index = 0;
+	free(*memory);
+	*memory = NULL;
+	return (0);
+}
+
+int	my_split(char *buf, char **line_or_mem)
+{
+	size_t	i;
+	size_t	j;
+	char	*tmp;
+
+	i = 0;
+	while (*line_or_mem != NULL && (*line_or_mem)[i] != '\0')
 		i++;
+	j = 0;
+	while (buf[j] != '\0')
 		j++;
-	}
-	res[i] = '\0';
-	return (res);
+	tmp = malloc(sizeof(char) * (i + j + 1));
+	if (!tmp)
+		return (-1);
+	tmp[i + j] = '\0';
+	while (j-- > 0)
+		tmp[i + j] = buf[j];
+	while (*line_or_mem != NULL && i-- > 0)
+		tmp[i] = (*line_or_mem)[i];
+	if (*line_or_mem != NULL)
+		free(*line_or_mem);
+	*line_or_mem = tmp;
+	return (0);
 }
 
-char	*ft_substr(char *s, int start_s, size_t len)
+int	ft_read(char **line, t_list *list)
 {
-	char			*sub;
-	unsigned int	i;
-	size_t		start;
+	ssize_t	bytes;
+	char	*buf;
+	ssize_t	i;
 
-	i = 0;
-	start = start_s;
-	if (s == NULL)
-		return (NULL);
-	if (start >= ft_strlen(s))
+	buf = malloc(sizeof(char) * (BUFFER_SIZE + 1));
+	if (!buf)
+		return (-1);
+	i = BUFFER_SIZE;
+	while (i == BUFFER_SIZE)
 	{
-		if (!(sub = malloc(sizeof(char) * 1)))
-			return (NULL);
-		sub[i] = '\0';
-		return (sub);
+		bytes = read(list->fd, buf, BUFFER_SIZE);
+		buf[bytes] = '\0';
+		i = 0;
+		while (buf[i] != '\n' && i < bytes)
+			i++;
+		buf[i] = '\0';
+		if (my_split(buf, line) != 0 || bytes < 0)
+			return (clean(&list, &buf));
+		if (i < bytes)
+			if (my_split(&(buf[i + 1]), &list->memory) != 0)
+				return (clean(&list, &buf));
 	}
-	if (len > ft_strlen(s))
-		len = ft_strlen(s);
-	sub = malloc(sizeof(char) * (len + 1));
-	if (sub == NULL)
-		return (NULL);
-	while (i < len && s[start + i] != '\0')
-	{
-		sub[i] = s[start + i];
-		i++;
-	}
-	sub[i] = '\0';
-	return (sub);
-}
-
-char    *ft_calloc(size_t count, size_t size)
-{
-    char    *dst;
-    size_t  i;
-    size_t  all;
-
-    all = count * size;
-    dst = malloc(all);
-    if (dst == 0)
-        return (NULL);
-    i = 0;
-    while (all != 0)
-{
-    dst[i] = '\0';
-    i++;
-    all--;
-}
-return (dst);
+	free(buf);
+	return (0);
 }
